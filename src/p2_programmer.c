@@ -33,6 +33,7 @@
 #endif
 
 #include "p2_programmer.h"
+#include "discovery.h"
 
 #define P2_PROGRAM_PORT       1024
 #define P2_SET_IP_LEN         115
@@ -733,7 +734,11 @@ static void hl2_reboot_clicked(GtkButton *button, gpointer data) {
   if (sock < 0 || sendto(sock, packet, sizeof(packet), 0,
                          (struct sockaddr *)&dst, sizeof(dst)) != sizeof(packet)) {
     p2_error_dialog(GTK_WINDOW(ui->dialog), "Failed to send HL2 reboot command.");
-  } else { gtk_label_set_text(GTK_LABEL(ui->status_label), "HL2 reboot command sent."); }
+  } else {
+    /* Only an explicitly requested reboot triggers rediscovery. */
+    discovery_after_hl2_reboot();
+    gtk_widget_destroy(ui->dialog);
+  }
   if (sock >= 0) { close(sock); }
 }
 

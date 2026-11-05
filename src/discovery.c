@@ -60,6 +60,31 @@
 #include "p2_programmer.h"
 
 static GtkWidget *discovery_dialog;
+/* Automatic HL2 rediscovery is armed only by the P1 Setup Reboot button. */
+static guint hl2_rediscover_timer = 0;
+static gint64 hl2_rediscover_deadline = 0;
+static gboolean hl2_rediscover_active = FALSE;
+
+static gboolean hl2_rediscover_cb(gpointer data) {
+  (void)data;
+  hl2_rediscover_timer = 0;
+  if (!hl2_rediscover_active) { return G_SOURCE_REMOVE; }
+  if (discovery_dialog != NULL) {
+    gtk_widget_destroy(discovery_dialog);
+  }
+  discovery();
+  return G_SOURCE_REMOVE;
+}
+
+void discovery_after_hl2_reboot(void) {
+  if (hl2_rediscover_timer != 0) {
+    g_source_remove(hl2_rediscover_timer);
+    hl2_rediscover_timer = 0;
+  }
+  hl2_rediscover_active = TRUE;
+  hl2_rediscover_deadline = g_get_monotonic_time() + 15 * G_USEC_PER_SEC;
+  hl2_rediscover_timer = g_timeout_add_seconds(3, hl2_rediscover_cb, NULL);
+}
 static DISCOVERED *d;
 
 static GtkWidget *apps_combobox[MAX_DEVICES];
@@ -200,11 +225,18 @@ static gboolean close_cb(GtkWidget *widget, GdkEvent *event, gpointer data) {
 }
 
 static void destroy_cb(GtkWidget *widget, gpointer data) {
-  (void)widget;
   (void)data;
+  if (discovery_dialog == widget) { discovery_dialog = NULL; }
+  /* A scheduled retry owns the transition; manual closure cancels it. */
+  if (hl2_rediscover_timer != 0 && !hl2_rediscover_active) {
+    g_source_remove(hl2_rediscover_timer);
+    hl2_rediscover_timer = 0;
+  }
 }
 
 static gboolean start_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  hl2_rediscover_active = FALSE;
+  if (hl2_rediscover_timer) { g_source_remove(hl2_rediscover_timer); hl2_rediscover_timer = 0; }
   /* korrektes Gerät aus der Discover-Liste selektieren */
   selected_device = GPOINTER_TO_INT(data);
   /* Safety: Index validieren */
@@ -306,12 +338,16 @@ static gboolean protocols_cb(GtkWidget *widget, GdkEventButton *event, gpointer 
 }
 
 static gboolean discover_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  hl2_rediscover_active = FALSE;
+  if (hl2_rediscover_timer) { g_source_remove(hl2_rediscover_timer); hl2_rediscover_timer = 0; }
   gtk_widget_destroy(discovery_dialog);
   g_timeout_add(100, delayed_discovery, NULL);
   return TRUE;
 }
 
 static gboolean exit_cb(GtkWidget *widget, GdkEventButton *event, gpointer data) {
+  hl2_rediscover_active = FALSE;
+  if (hl2_rediscover_timer) { g_source_remove(hl2_rediscover_timer); hl2_rediscover_timer = 0; }
   gtk_widget_destroy(discovery_dialog);
   exit(EXIT_SUCCESS);
   return TRUE;
@@ -383,13 +419,15 @@ static void protocols_clicked(GtkButton *btn, gpointer data) { (void) btn; proto
 static void exit_clicked(GtkButton *btn, gpointer data)     { (void) btn; exit_cb(NULL, NULL, data); }
 
 void discovery(void) {
+  gboolean hl2_reboot_scan = hl2_rediscover_active;
   //
   // On the discovery screen, make the combo-boxes "touchscreen-friendly"
   //
   touch_ui = 1;
   selected_device = 0;
   devices = 0;
-  if (!discover_only_stemlab && ipaddr_radio[0] == '\0' && reuse_last_device && last_device_valid) {
+  if (!hl2_rediscover_active && !discover_only_stemlab && ipaddr_radio[0] == '\0' && reuse_last_device &&
+      last_device_valid) {
     status_text("Looking for last used SDR ...");
     if (last_device_protocol == ORIGINAL_PROTOCOL && enable_protocol_1) {
       old_reuse_discovery();
@@ -709,6 +747,21 @@ discovery_done:
   }
   gtk_container_add(GTK_CONTAINER(content), grid);
   gtk_widget_show_all(discovery_dialog);
+  if (hl2_rediscover_active) {
+    gboolean found_hl2 = FALSE;
+    for (int i = 0; i < devices; i++) {
+      if (discovered[i].protocol == ORIGINAL_PROTOCOL &&
+          discovered[i].device == DEVICE_HERMES_LITE2) {
+        found_hl2 = TRUE;
+        break;
+      }
+    }
+    if (found_hl2 || g_get_monotonic_time() >= hl2_rediscover_deadline) {
+      hl2_rediscover_active = FALSE;
+    } else {
+      hl2_rediscover_timer = g_timeout_add_seconds(2, hl2_rediscover_cb, NULL);
+    }
+  }
   t_print("showing device dialog\n");
   //
   // Autostart and RedPitaya radios:
@@ -725,7 +778,7 @@ discovery_done:
   // devices only.
   //
   t_print("%s: devices=%d autostart=%d\n", __func__, devices, autostart);
-  if (devices == 1 && autostart) {
+  if (devices == 1 && autostart && !hl2_reboot_scan) {
     d = &discovered[0];
     if (d->status == STATE_AVAILABLE) {
       if (start_cb(NULL, NULL, GINT_TO_POINTER(d - discovered))) {
