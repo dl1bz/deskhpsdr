@@ -5344,6 +5344,21 @@ static void tci_cmd_rtty_stop(CLIENT *client, const TCI_CMD *cmd) {
   g_mutex_unlock(&tci_mutex);
 }
 
+/* deskHPSDR extension: trigger the existing CW Zero Beat action on the GTK thread. */
+static gboolean tci_cw_zero_beat_idle(gpointer user_data) {
+  (void)user_data;
+  if (active_receiver != NULL) {
+    rx_cw_zero_beat_start(active_receiver);
+  }
+  return G_SOURCE_REMOVE;
+}
+
+static void tci_cmd_cw_zero_beat(CLIENT *client, const TCI_CMD *cmd) {
+  (void)client;
+  (void)cmd;
+  g_idle_add(tci_cw_zero_beat_idle, NULL);
+}
+
 static void tci_cmd_cw_macros(CLIENT *client, const TCI_CMD *cmd) {
   GString *raw;
   char *decoded;
@@ -5490,6 +5505,7 @@ static const TCI_DISPATCH tci_dispatch[] = {
   { "rtty_text",         1,  1, tci_cmd_rtty_text },
   { "rtty_drain",        0,  0, tci_cmd_rtty_drain },
   { "rtty_stop",         0,  0, tci_cmd_rtty_stop },
+  { "cw_zero_beat",      0,  0, tci_cmd_cw_zero_beat },
   { "cw_macros",         2, -1, tci_cmd_cw_macros },
   { "cw_macros_stop",    0,  0, tci_cmd_cw_macros_stop },
   { "cw_msg",             1,  4, tci_cmd_cw_msg },
