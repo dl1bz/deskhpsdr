@@ -304,6 +304,7 @@ extern int memory_tune;
 extern int full_tune;
 
 extern int adc0_p_ovl;  /* Protocol/FPGA reported ADC0 overload */
+extern volatile gint hl2_adc0_ovf_events; /* Atomic P1 overload event counter for PS */
 extern int adc1_p_ovl;  /* Protocol/FPGA reported ADC1 overload */
 extern int adc0_fs_ovl; /* Full-scale detected from ADC0 I/Q samples */
 extern int adc1_fs_ovl; /* Full-scale detected from ADC1 I/Q samples */

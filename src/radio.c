@@ -395,6 +395,7 @@ int mercury_software_version[2] = {0, 0};
 int penelope_software_version;
 
 int adc0_p_ovl = 0;
+volatile gint hl2_adc0_ovf_events = 0;
 int adc1_p_ovl = 0;
 int adc0_fs_ovl = 0;
 int adc1_fs_ovl = 0;

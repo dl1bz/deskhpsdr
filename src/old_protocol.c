@@ -1771,6 +1771,9 @@ static void process_control_bytes(void) {
   switch ((control_in[0] >> 3) & 0x1F) {
   case 0:
     adc0_p_ovl |= (control_in[1] & 0x01);
+    if (device == DEVICE_HERMES_LITE2 && (control_in[1] & 0x01)) {
+      g_atomic_int_inc(&hl2_adc0_ovf_events);
+    }
     //
     // Hermes IOx inputs (x=1,2,3,4), used for TxInhibit and AutoTune
     // This inputs are active if the bit is cleared

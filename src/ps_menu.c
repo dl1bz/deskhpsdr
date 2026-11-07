@@ -552,8 +552,12 @@ static void clear_fields(void) {
 int ps_calibration_timer(gpointer arg) {
   guint *timer = (guint *) arg;
   static int state = -1;
+  static gint last_hl2_ovf_events = 0;
+  static gint64 last_ovf_adjust_us = 0;
   if (!transmitter->twotone && !transmitter->noise) {
     state = -1;
+    last_hl2_ovf_events = g_atomic_int_get(&hl2_adc0_ovf_events);
+    last_ovf_adjust_us = 0;
     *timer = 0;
     return G_SOURCE_REMOVE;
   }
@@ -562,6 +566,8 @@ int ps_calibration_timer(gpointer arg) {
     // Initialized PS calibration
     //
     state = 1;          // start with PS reset
+    last_hl2_ovf_events = g_atomic_int_get(&hl2_adc0_ovf_events);
+    last_ovf_adjust_us = 0;
     clear_fields();     // clear all data until the next calibration has been done
   }
   if (transmitter->puresignal) {
@@ -598,6 +604,37 @@ int ps_calibration_timer(gpointer arg) {
       // to Auto Attenuate.
       old4 = -1;
       count = 0;
+    }
+    // P1 reports hardware ADC0 clipping independently of the WDSP feedback
+    // level.  Use an atomic event counter: the panadapter clears adc0_p_ovl
+    // and must not be able to consume an overflow before PS sees it.
+    // Do not use the RX-only RxPGA auto-gain path here.
+    if (device == DEVICE_HERMES_LITE2) {
+      gint events = g_atomic_int_get(&hl2_adc0_ovf_events);
+      if (state == 0 && transmitter->auto_on && radio_is_transmitting()
+          && events != last_hl2_ovf_events) {
+        gint64 now_us = g_get_monotonic_time();
+        if (last_ovf_adjust_us == 0 || now_us - last_ovf_adjust_us >= 500000) {
+          int new_att = transmitter->attenuation + 6;
+          if (new_att > tx_att_max) { new_att = tx_att_max; }
+          last_hl2_ovf_events = events;
+          last_ovf_adjust_us = now_us;
+          if (new_att != transmitter->attenuation) {
+            transmitter->attenuation = new_att;
+            store_tx_att_for_current_band();
+            schedule_high_priority();
+            schedule_transmit_specific();
+            // Discard the pre-adjustment WDSP feedback level and recalibrate.
+            old4 = -1;
+            count = 0;
+            state = 1;
+            return G_SOURCE_CONTINUE;
+          }
+        }
+      } else if (!transmitter->auto_on || !radio_is_transmitting()) {
+        last_hl2_ovf_events = events;
+        last_ovf_adjust_us = 0;
+      }
     }
     switch (state) {
     case 0:
