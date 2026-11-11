@@ -257,28 +257,51 @@ gboolean rx_scroll_event(GtkWidget *widget, const GdkEventScroll *event, gpointe
     return FALSE; // no mouse wheel event processing
   }
 #ifdef __APPLE__
-  // if using Apple Magic Mouse it's tricky to use the mouse because we have only touch but no real wheel
-  // for safer use we need to press the OPTION key for VFO movement in VFO step and
-  // CTRL+OPTION for VFO movement in VFO step 10 instead 1
-  //
-  // At a Mac we use now GDK_MOD1_MASK [OPTION-key] and GDK_CONTROL_MASK [CONTROL-key],
-  // Serveral tests with a Macbook Air M1 was showing, that combinations like SHIFT+CONTROL or SHIFT+OPTION
-  // hasn't any effect. Otherwise, OPTION and CTRL+OPTION were working. Very strange...
+  // Magic Mouse/trackpads report horizontal and vertical scrolling, often
+  // as GDK_SCROLL_SMOOTH. Determine the direction from the actual axis;
+  // treating every event other than UP as DOWN breaks horizontal scrolling.
+  int direction = 0;
+  switch (event->direction) {
+  case GDK_SCROLL_UP:
+  case GDK_SCROLL_RIGHT:
+    direction = 1;
+    break;
+  case GDK_SCROLL_DOWN:
+  case GDK_SCROLL_LEFT:
+    direction = -1;
+    break;
+  case GDK_SCROLL_SMOOTH: {
+    gdouble dx = 0.0;
+    gdouble dy = 0.0;
+    if (gdk_event_get_scroll_deltas((const GdkEvent *)event, &dx, &dy)) {
+      // GTK: negative Y scrolls up; positive X scrolls right.
+      // Prefer the dominant axis for diagonal gestures.
+      if (ABS(dx) > ABS(dy)) {
+        direction = (dx > 0.0) - (dx < 0.0);
+      } else {
+        direction = (dy < 0.0) - (dy > 0.0);
+      }
+    }
+    break;
+  }
+  default:
+    break;
+  }
+  if (direction == 0) {
+    return TRUE;
+  }
   if (rx->wheel_present) {
     gboolean shift = (event->state & GDK_SHIFT_MASK) != 0;
     gboolean option = (event->state & GDK_MOD1_MASK) != 0;
-    if ((shift && !option) || (!shift && option)) {   // XOR: Nur eine gedrückt
-      vfo_step(event->direction == GDK_SCROLL_UP ? 10 : -10);
-    } else {
-      vfo_step(event->direction == GDK_SCROLL_UP ? 1 : -1);
-    }
+    int wheel_step = (shift != option) ? 10 : 1;
+    vfo_step(direction * wheel_step);
   } else {
-    gboolean option = event->state & GDK_MOD1_MASK;
-    gboolean control = event->state & GDK_CONTROL_MASK;
+    gboolean option = (event->state & GDK_MOD1_MASK) != 0;
+    gboolean control = (event->state & GDK_CONTROL_MASK) != 0;
     if (option && control) {
-      vfo_step(event->direction == GDK_SCROLL_UP ? 10 : -10);
+      vfo_step(direction * 10);
     } else if (option) {
-      vfo_step(event->direction == GDK_SCROLL_UP ? 1 : -1);
+      vfo_step(direction);
     }
   }
 #else
