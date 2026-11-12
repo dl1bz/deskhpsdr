@@ -278,7 +278,7 @@ void show_popup_slider(enum ACTION action, int rx, double min, double max, doubl
     gtk_widget_set_name(popup_scale, "popup_scale");
     gtk_widget_set_size_request(popup_scale, 400, 30);
     gtk_range_set_value(GTK_RANGE(popup_scale), value),
-                        gtk_widget_show(popup_scale);
+    gtk_widget_show(popup_scale);
     gtk_widget_set_sensitive(popup_scale, FALSE);
     gtk_container_add(GTK_CONTAINER(content), popup_scale);
     scale_timer = g_timeout_add(2000, scale_timeout_cb, NULL);
@@ -299,7 +299,7 @@ void show_popup_slider(enum ACTION action, int rx, double min, double max, doubl
       gtk_range_set_range(GTK_RANGE(popup_scale), scale_min, scale_max);
     }
     gtk_range_set_value(GTK_RANGE(popup_scale), value),
-                        scale_timer = g_timeout_add(2000, scale_timeout_cb, NULL);
+    scale_timer = g_timeout_add(2000, scale_timeout_cb, NULL);
   }
 }
 
