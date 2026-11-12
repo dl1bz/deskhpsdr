@@ -1034,10 +1034,13 @@ static GtkWidget *build_general_page(void) {
   GtkWidget *operation_grid = NULL;
   GtkWidget *operation_frame = rx_menu_section_new("Operation", &operation_grid);
   row = 0;
-  GtkWidget *wheel_present_btn = gtk_check_button_new_with_label("using Mouse with Wheel");
+  GtkWidget *wheel_present_btn = gtk_check_button_new_with_label("Change Mouse Gestures/Wheel behaviour");
   gtk_widget_set_name(wheel_present_btn, "boldlabel_blue");
   gtk_widget_set_tooltip_text(wheel_present_btn,
-                              "macOS only:\nIf ON, the mouse wheel can change the frequency\nIf OFF, you need to press OPTION + mouse wheel for frequency change");
+                              "ON : the mouse gestures can change the frequency\n"
+                              "OFF: you need to press OPTION + mouse gesture for frequency change\n\n"
+                              "With Apples Magic Mouse you can use LEFT/UP or RIGHT/DOWN for frequency change.\n"
+                              "For other Mouse types use the Wheel function.");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(wheel_present_btn),
                                receiver[0] != NULL ? receiver[0]->wheel_present : 1);
   gtk_grid_attach(GTK_GRID(operation_grid), wheel_present_btn, 0, row, 1, 1);
