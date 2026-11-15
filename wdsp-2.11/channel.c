@@ -28,9 +28,6 @@ warren@pratt.one
 #include <limits.h>
 #include <stdint.h>
 
-#if defined(__SSE__) && !defined(_WIN32)
-  #include <xmmintrin.h>
-#endif
 
 struct _ch ch[MAX_CHANNELS];
 
@@ -161,9 +158,6 @@ void OpenChannel(int channel, int in_size, int dsp_size, int input_samplerate, i
     InterlockedBitTestAndReset(&ch[channel].iob.pc->exec_bypass, 0);
     InterlockedBitTestAndSet(&ch[channel].exchange, 0);
   }
-#if defined(__SSE__) || defined(_WIN32)
-  _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
-#endif
 }
 
 void pre_main_destroy(int channel) {

@@ -27,6 +27,7 @@ warren@wpratt.com
 */
 
 #include "comm.h"
+#include "wdsp_ftz.h"
 
 DP pdisp[dMAX_DISPLAYS];
 
@@ -932,6 +933,7 @@ int build_interpolants(int disp, int set, int n, int m, double *x, double (*y)[d
 
 void __cdecl sendbuf(void *arg) {
   DP a = pdisp[(int)(uintptr_t)arg];
+  wdsp_ftz_enable();
   while (!a->end_dispatcher) {
     for (a->ss = 0; a->ss < a->num_stitch; a->ss++)
       for (a->LO = 0; a->LO < a->num_fft; a->LO++) {

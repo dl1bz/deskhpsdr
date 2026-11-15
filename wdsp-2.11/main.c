@@ -25,8 +25,10 @@ warren@wpratt.com
 */
 
 #include "comm.h"
+#include "wdsp_ftz.h"
 
 void wdspmain(void *pargs) {
+  wdsp_ftz_enable();
 #ifdef _WIN32
   DWORD taskIndex = 0;
   HANDLE hTask = AvSetMmThreadCharacteristics(TEXT("Pro Audio"), &taskIndex);

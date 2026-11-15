@@ -26,7 +26,7 @@ else
         CFLAGS ?= -O2
     endif
 endif
-CFLAGS += -pthread -D_GNU_SOURCE -Wno-parentheses -Wcast-align
+CFLAGS += -fno-strict-aliasing -pthread -D_GNU_SOURCE -Wno-parentheses -Wcast-align
 CFLAGS += -I../wdsp-libs/include
 
 FFTW_LOCAL_PREFIX ?= ../fftw-3.3.11/build

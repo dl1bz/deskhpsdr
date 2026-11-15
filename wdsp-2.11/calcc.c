@@ -26,6 +26,7 @@ warren@pratt.one
 
 #define _CRT_SECURE_NO_WARNINGS
 #include "comm.h"
+#include "wdsp_ftz.h"
 #include "extrapolate.h"
 #include "nurbs_spline.h"
 #include "nurbs_fit.h"
@@ -1589,6 +1590,7 @@ cleanup:
 
 void __cdecl doPSCorrChange(void *arg) {
   CALCC a = (CALCC)arg;
+  wdsp_ftz_enable();
   uint32_t num_sems = 5;
   while (1) {
     uint32_t waitstat = WaitForMultipleObjects(num_sems, a->SemsPSCorr, FALSE, INFINITE);

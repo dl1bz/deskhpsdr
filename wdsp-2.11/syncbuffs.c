@@ -25,6 +25,7 @@ warren@pratt.one
 */
 
 #include "comm.h"
+#include "wdsp_ftz.h"
 
 void start_syncbthread(SYNCB a) {
   HANDLE handle;
@@ -163,6 +164,7 @@ int syncbdata(SYNCB a) {
 
 void syncb_main(void *p) {
   SYNCB a = (SYNCB)p;
+  wdsp_ftz_enable();
   while (_InterlockedAnd(&a->run, 1)) {
     WaitForSingleObject(a->Sem_BuffReady, INFINITE);
     if (!syncbdata(a)) {
