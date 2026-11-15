@@ -1512,6 +1512,32 @@ void rx_panadapter_update(RECEIVER *rx) {
   pan_display_shift = (double) rx_get_mode_dc_offset(vfo_id) / HzPerPixel;
   double min_display = (double) frequency - (double) half + ((double) rx->pan * HzPerPixel);
   double max_display = min_display + ((double) mywidth * HzPerPixel);
+  // Explicit beacon-exclusive segments from IARU Region 1 HF band plan (16 Oct 2020).
+  // The plan does not define additional contest-free subsegments on the
+  // classic contest bands. Do not infer restrictions from contest-preferred
+  // or DX-priority annotations. No TX enforcement is performed here.
+  if (iaru_protected_overlay && iaru_region == 1) {
+    static const struct { long long low, high; } beacons[] = {
+      {14099000LL, 14101000LL},
+      {18109000LL, 18111000LL},
+      {21149000LL, 21151000LL},
+      {24929000LL, 24931000LL},
+      {28190000LL, 28199000LL},
+      {28199000LL, 28201000LL},
+      {28201000LL, 28225000LL}
+    };
+    cairo_set_source_rgba(cr, 1.0, 0.35, 0.65, 0.55);
+    for (size_t j = 0; j < sizeof(beacons) / sizeof(beacons[0]); j++) {
+      double x1 = ((double)beacons[j].low - min_display) / HzPerPixel;
+      double x2 = ((double)beacons[j].high - min_display) / HzPerPixel;
+      if (x2 > 0.0 && x1 < mywidth) {
+        double left = fmax(0.0, x1);
+        double right = fmin((double)mywidth, x2);
+        cairo_rectangle(cr, left, 0.0, right - left, myheight);
+      }
+    }
+    cairo_fill(cr);
+  }
   if (vfoband == band60 && band_channels_60m != NULL && region > 0) {
     for (i = 0; i < channel_entries; i++) {
       long long low_freq = band_channels_60m[i].frequency - (band_channels_60m[i].width / (long long) 2);

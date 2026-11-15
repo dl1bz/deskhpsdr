@@ -126,6 +126,7 @@ typedef enum {
 } HERMES_MODE;
 
 extern int region;
+extern int iaru_protected_overlay;
 
 extern int RECEIVERS;
 extern int PS_TX_FEEDBACK;

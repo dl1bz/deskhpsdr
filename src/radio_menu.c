@@ -459,6 +459,12 @@ static void region_cb(GtkWidget *widget, gpointer data) {
   radio_change_region(gtk_combo_box_get_active(GTK_COMBO_BOX(widget)));
 }
 
+static void iaru_protected_overlay_cb(GtkToggleButton *button, gpointer data) {
+  (void)data;
+  iaru_protected_overlay = gtk_toggle_button_get_active(button) ? 1 : 0;
+  StartConfigSave();
+}
+
 static void iaru_region_cb(GtkWidget *widget, gpointer data) {
   int active = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
   (void)data;
@@ -543,6 +549,7 @@ static void locator_button_clicked(GtkWidget *widget, gpointer data) {
 
 void radio_menu(GtkWidget *parent) {
   int col;
+  int col_pg_two;
   GtkWidget *label;
   GtkWidget *ChkBtn;
   dialog = gtk_dialog_new();
@@ -559,40 +566,25 @@ void radio_menu(GtkWidget *parent) {
   g_signal_connect(dialog, "destroy", G_CALLBACK(destroy_cb), NULL);
   GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   GtkWidget *grid = gtk_grid_new();
+  GtkWidget *regulations_grid = gtk_grid_new();
+  gtk_grid_set_column_spacing(GTK_GRID(regulations_grid), 8);
+  gtk_grid_set_row_spacing(GTK_GRID(regulations_grid), 8);
+  gtk_container_set_border_width(GTK_CONTAINER(regulations_grid), 8);
   gtk_grid_set_column_spacing(GTK_GRID(grid), 5);
   gtk_grid_set_row_spacing(GTK_GRID(grid), 5);
   gtk_grid_set_column_homogeneous(GTK_GRID(grid), FALSE);
   gtk_grid_set_row_homogeneous(GTK_GRID(grid), FALSE);
   int row;
   int max_row;
+  int row_pg_two;
   col = 0;
   row = 0;
-  GtkWidget *close_b = gtk_button_new_with_label("Close");
-  gtk_widget_set_name(close_b, "close_button");
-  g_signal_connect(close_b, "clicked", G_CALLBACK(close_cb), NULL);
-  gtk_grid_attach(GTK_GRID(grid), close_b, col, row, 1, 1);
-  if (can_transmit) {
-    //--------------------------------------------------------------------------------------------------------
-    col++;
-    label = gtk_label_new("Audio Capture Time (sec):");
-    gtk_widget_set_name(label, "boldlabel_blue");
-    gtk_grid_attach(GTK_GRID(grid), label, col, row, 1, 1);
-    //--------------------------------------------------------------------------------------------------------
-    col++;
-    GtkWidget *capture_time_btn = gtk_spin_button_new_with_range(10, 120, 10);
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(capture_time_btn), (int) capture_max / 48000);
-    gtk_widget_set_hexpand(capture_time_btn, FALSE);
-    gtk_widget_set_halign(capture_time_btn, GTK_ALIGN_START);
-    gtk_grid_attach(GTK_GRID(grid), capture_time_btn, col, row, 1, 1);
-    g_signal_connect(capture_time_btn, "value_changed", G_CALLBACK(capture_time_changed_cb), NULL);
-    //--------------------------------------------------------------------------------------------------------
-  }
-  //--------------------------------------------------------------------------------------------------------
-  row = 1;
+  col_pg_two = 0;
+  row_pg_two = 0;
   label = gtk_label_new("Receivers:");
   gtk_widget_set_name(label, "boldlabel");
   gtk_widget_set_halign(label, GTK_ALIGN_START);
-  gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), label, col, row, 1, 1);
   row++;
   GtkWidget *receivers_combo = gtk_combo_box_text_new();
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(receivers_combo), NULL, "1");
@@ -600,15 +592,15 @@ void radio_menu(GtkWidget *parent) {
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(receivers_combo), NULL, "2");
   }
   gtk_combo_box_set_active(GTK_COMBO_BOX(receivers_combo), receivers - 1);
-  my_combo_attach(GTK_GRID(grid), receivers_combo, 0, row, 1, 1);
+  my_combo_attach(GTK_GRID(grid), receivers_combo, col, row, 1, 1);
   g_signal_connect(receivers_combo, "changed", G_CALLBACK(receivers_cb), NULL);
-  row++;
   max_row = row;
-  row = 1;
+  row--;
+  col++;
   label = gtk_label_new("RIT/XIT step (Hz):");
   gtk_widget_set_name(label, "boldlabel");
   gtk_widget_set_halign(label, GTK_ALIGN_START);
-  gtk_grid_attach(GTK_GRID(grid), label, 1, row, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), label, col, row, 1, 1);
   row++;
   GtkWidget *rit_combo = gtk_combo_box_text_new();
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(rit_combo), NULL, "1");
@@ -630,15 +622,27 @@ void radio_menu(GtkWidget *parent) {
     gtk_combo_box_set_active(GTK_COMBO_BOX(rit_combo), 2);
     break;
   }
-  my_combo_attach(GTK_GRID(grid), rit_combo, 1, row, 1, 1);
+  my_combo_attach(GTK_GRID(grid), rit_combo, col, row, 1, 1);
   g_signal_connect(rit_combo, "changed", G_CALLBACK(rit_cb), NULL);
+  //--------------------------------------------------------------------------------------------------------
+  col++;
+  if (can_transmit) {
+    row--;
+    label = gtk_label_new("Audio Capture Time (sec):");
+    gtk_widget_set_halign(label, GTK_ALIGN_START);
+    gtk_widget_set_name(label, "boldlabel_blue");
+    gtk_grid_attach(GTK_GRID(grid), label, col, row, 1, 1);
+    row++;
+    GtkWidget *capture_time_btn = gtk_spin_button_new_with_range(10, 120, 10);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(capture_time_btn), (int) capture_max / 48000);
+    gtk_widget_set_hexpand(capture_time_btn, FALSE);
+    gtk_widget_set_halign(capture_time_btn, GTK_ALIGN_START);
+    gtk_grid_attach(GTK_GRID(grid), capture_time_btn, col, row, 1, 1);
+    g_signal_connect(capture_time_btn, "value_changed", G_CALLBACK(capture_time_changed_cb), NULL);
+  }
+  //--------------------------------------------------------------------------------------------------------
   row++;
-  GtkWidget *sr_note = gtk_label_new(NULL);
-  gtk_label_set_markup(GTK_LABEL(sr_note), "<b>SDR-Device Samplerate\nSettings in RX Menu</b>");
-  gtk_label_set_justify(GTK_LABEL(sr_note), GTK_JUSTIFY_CENTER);
-  gtk_label_set_xalign(GTK_LABEL(sr_note), 0.5);
-  gtk_widget_set_halign(sr_note, GTK_ALIGN_CENTER);
-  gtk_grid_attach(GTK_GRID(grid), sr_note, 0, 5, 1, 1);
+  //--------------------------------------------------------------------------------------------------------
   label = gtk_label_new("SAT mode:");
   gtk_widget_set_halign(label, GTK_ALIGN_START);
   gtk_widget_set_name(label, "boldlabel");
@@ -653,19 +657,20 @@ void radio_menu(GtkWidget *parent) {
   g_signal_connect(sat_combo, "changed", G_CALLBACK(sat_cb), NULL);
   row++;
   if (row > max_row) { max_row = row; }
-  row = 1;
+  row = 2;
   //--------------------------------------------------------------------------------------------------------
   label = gtk_label_new("Channel Marker for 60m:");
   gtk_widget_set_name(label, "boldlabel");
   gtk_widget_set_halign(label, GTK_ALIGN_START);
-  gtk_grid_attach(GTK_GRID(grid), label, 2, row, 1, 1);
+  gtk_grid_attach(GTK_GRID(regulations_grid), label, col_pg_two, row_pg_two, 1, 1);
   //--------------------------------------------------------------------------------------------------------
   label = gtk_label_new("IARU Region:");
   gtk_widget_set_name(label, "boldlabel_blue");
   gtk_widget_set_halign(label, GTK_ALIGN_START);
-  gtk_grid_attach(GTK_GRID(grid), label, 0, 3, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1);
   //--------------------------------------------------------------------------------------------------------
   row++;
+  row_pg_two++;
   GtkWidget *region_combo = gtk_combo_box_text_new();
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(region_combo), NULL, "NONE (VFO)");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(region_combo), NULL, "UK Channels");
@@ -680,8 +685,16 @@ void radio_menu(GtkWidget *parent) {
                               "WRC15 - ONE Channel according to the WRC15 recommendation for 60m\n"
                               "CA - CA Channelizing 60m\n"
                               "NONE - No channel markers");
-  my_combo_attach(GTK_GRID(grid), region_combo, 2, row, 1, 1);
+  my_combo_attach(GTK_GRID(regulations_grid), region_combo, col_pg_two, row_pg_two, 1, 1);
   g_signal_connect(region_combo, "changed", G_CALLBACK(region_cb), NULL);
+  row_pg_two++;
+  GtkWidget *protected_overlay_check = gtk_check_button_new_with_label("IARU protected beacon areas");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(protected_overlay_check), iaru_protected_overlay);
+  gtk_widget_set_tooltip_text(protected_overlay_check,
+                              "Highlight only explicitly beacon-exclusive IARU Region 1 segments.\n"
+                              "No inferred contest-free areas or TX blocking.");
+  gtk_grid_attach(GTK_GRID(regulations_grid), protected_overlay_check, col_pg_two, row_pg_two, 2, 1);
+  g_signal_connect(protected_overlay_check, "toggled", G_CALLBACK(iaru_protected_overlay_cb), NULL);
   //--------------------------------------------------------------------------------------------------------
   GtkWidget *iaru_region_combo_box = gtk_combo_box_text_new();
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(iaru_region_combo_box), NULL, "1");
@@ -697,10 +710,10 @@ void radio_menu(GtkWidget *parent) {
                               "2 - Region 2 / Americas\n"
                               "3 - Region 3 / Asia-Pacific\n\n"
                               "This does not affect the separate 60m channel marker setting.");
-  my_combo_attach(GTK_GRID(grid), iaru_region_combo_box, 0, 4, 1, 1);
+  my_combo_attach(GTK_GRID(grid), iaru_region_combo_box, 0, row, 1, 1);
   g_signal_connect(iaru_region_combo_box, "changed", G_CALLBACK(iaru_region_cb), NULL);
   //--------------------------------------------------------------------------------------------------------
-  row++;
+  row--;
   if (protocol == ORIGINAL_PROTOCOL || protocol == NEW_PROTOCOL) {
     label = gtk_label_new("Filter Board:");
     gtk_widget_set_name(label, "boldlabel");
@@ -751,13 +764,13 @@ void radio_menu(GtkWidget *parent) {
   row = max_row;
   label = gtk_label_new("VFO Encoder Divisor:");
   gtk_widget_set_name(label, "boldlabel");
-  gtk_widget_set_halign(label, GTK_ALIGN_END);
-  gtk_grid_attach(GTK_GRID(grid), label, 0, row, 2, 1);
+  gtk_widget_set_halign(label, GTK_ALIGN_START);
+  gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1);
   GtkWidget *vfo_divisor = gtk_spin_button_new_with_range(1.0, 60.0, 1.0);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(vfo_divisor), (double) vfo_encoder_divisor);
   gtk_widget_set_hexpand(vfo_divisor, FALSE);
   gtk_widget_set_halign(vfo_divisor, GTK_ALIGN_START);
-  gtk_grid_attach(GTK_GRID(grid), vfo_divisor, 2, row, 1, 1);
+  gtk_grid_attach(GTK_GRID(grid), vfo_divisor, 1, row, 1, 1);
   g_signal_connect(vfo_divisor, "value_changed", G_CALLBACK(vfo_divisor_value_changed_cb), NULL);
   row++;
   // cppcheck-suppress knownConditionTrueFalse
@@ -838,7 +851,7 @@ void radio_menu(GtkWidget *parent) {
   //-----------------------------------------------------------------------------------------------------------
   if (device == NEW_DEVICE_ORION || device == NEW_DEVICE_ORION2 || device == NEW_DEVICE_SATURN ||
       device == DEVICE_ORION || device == DEVICE_ORION2) {
-    row = 1;
+    row = 0;
     label = gtk_label_new("ORION/SATURN Mic jack:");
     gtk_widget_set_name(label, "boldlabel");
     // gtk_widget_set_halign(label, GTK_ALIGN_CENTER);
@@ -1165,7 +1178,33 @@ void radio_menu(GtkWidget *parent) {
   g_signal_connect(locator_box_btn, "clicked", G_CALLBACK(locator_button_clicked), locator_box);
   gtk_grid_attach(GTK_GRID(grid), Data_box, col, row, 4, 1);
   //---------------------------------------------------------------------------------------------------
-  gtk_container_add(GTK_CONTAINER(content), grid);
+  GtkWidget *outer = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
+  gtk_widget_set_margin_top(outer, 8);
+  gtk_widget_set_margin_bottom(outer, 8);
+  gtk_widget_set_margin_start(outer, 8);
+  gtk_widget_set_margin_end(outer, 8);
+  GtkWidget *pages = gtk_stack_new();
+  gtk_stack_set_transition_type(GTK_STACK(pages), GTK_STACK_TRANSITION_TYPE_NONE);
+  gtk_stack_add_titled(GTK_STACK(pages), grid, "radio", "Radio");
+  gtk_stack_add_titled(GTK_STACK(pages), regulations_grid, "regulations", "Regulations");
+  GtkWidget *tabs = gtk_stack_switcher_new();
+  gtk_stack_switcher_set_stack(GTK_STACK_SWITCHER(tabs), GTK_STACK(pages));
+  gtk_widget_set_halign(tabs, GTK_ALIGN_START);
+  GtkWidget *header = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+  GtkWidget *close_b = gtk_button_new_with_label("Close");
+  gtk_widget_set_name(close_b, "close_button");
+  g_signal_connect(close_b, "clicked", G_CALLBACK(close_cb), NULL);
+  gtk_box_pack_start(GTK_BOX(header), close_b, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(header), tabs, FALSE, FALSE, 0);
+  GtkWidget *sr_note = gtk_label_new(NULL);
+  gtk_label_set_markup(GTK_LABEL(sr_note), "<b>SDR-Device Samplerate Settings in RX Menu</b>");
+  gtk_label_set_xalign(GTK_LABEL(sr_note), 1.0);
+  gtk_widget_set_hexpand(sr_note, TRUE);
+  gtk_widget_set_halign(sr_note, GTK_ALIGN_FILL);
+  gtk_box_pack_start(GTK_BOX(header), sr_note, TRUE, TRUE, 0);
+  gtk_box_pack_start(GTK_BOX(outer), header, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(outer), pages, TRUE, TRUE, 0);
+  gtk_container_add(GTK_CONTAINER(content), outer);
   sub_menu = dialog;
   gtk_widget_show_all(dialog);
 }
