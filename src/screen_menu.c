@@ -546,6 +546,12 @@ void screen_menu(GtkWidget *parent) {
   gtk_widget_set_margin_bottom(height_b, 5);
   gtk_box_pack_start(GTK_BOX(Z2_box), height_b, FALSE, FALSE, 0);
   g_signal_connect(height_b, "value-changed", G_CALLBACK(height_cb), NULL);
+  //--
+  label = gtk_label_new("Main Window size fixed here,\nfree Main Window scaling NOT supported");
+  gtk_widget_set_name(label, "boldlabel_red");
+  gtk_widget_set_margin_start(label, 15);
+  gtk_box_pack_start(GTK_BOX(Z2_box), label, FALSE, FALSE, 0);
+  //--
   // Box ins Grid
   gtk_grid_attach(GTK_GRID(grid), Z2_box, col, row, 4, 1);
   //---------------------------------------------------------------------------------------------------

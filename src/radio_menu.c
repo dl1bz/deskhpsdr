@@ -465,6 +465,12 @@ static void iaru_protected_overlay_cb(GtkToggleButton *button, gpointer data) {
   StartConfigSave();
 }
 
+static void iaru_contest_free_overlay_cb(GtkToggleButton *button, gpointer data) {
+  (void)data;
+  iaru_contest_free_overlay = gtk_toggle_button_get_active(button) ? 1 : 0;
+  StartConfigSave();
+}
+
 static void iaru_region_cb(GtkWidget *widget, gpointer data) {
   int active = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
   (void)data;
@@ -688,6 +694,13 @@ void radio_menu(GtkWidget *parent) {
   my_combo_attach(GTK_GRID(regulations_grid), region_combo, col_pg_two, row_pg_two, 1, 1);
   g_signal_connect(region_combo, "changed", G_CALLBACK(region_cb), NULL);
   row_pg_two++;
+  //--------------------------------------------------------------------------------------------------------
+  label = gtk_label_new("Other RX Panadapter Marker:");
+  gtk_widget_set_name(label, "boldlabel");
+  gtk_widget_set_halign(label, GTK_ALIGN_START);
+  gtk_grid_attach(GTK_GRID(regulations_grid), label, col_pg_two, row_pg_two, 1, 1);
+  //--------------------------------------------------------------------------------------------------------
+  row_pg_two++;
   GtkWidget *protected_overlay_check = gtk_check_button_new_with_label("IARU protected beacon areas");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(protected_overlay_check), iaru_protected_overlay);
   gtk_widget_set_tooltip_text(protected_overlay_check,
@@ -695,6 +708,14 @@ void radio_menu(GtkWidget *parent) {
                               "No inferred contest-free areas or TX blocking.");
   gtk_grid_attach(GTK_GRID(regulations_grid), protected_overlay_check, col_pg_two, row_pg_two, 2, 1);
   g_signal_connect(protected_overlay_check, "toggled", G_CALLBACK(iaru_protected_overlay_cb), NULL);
+  row_pg_two++;
+  GtkWidget *contest_free_check = gtk_check_button_new_with_label("IARU Contest-Free Areas");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(contest_free_check), iaru_contest_free_overlay);
+  gtk_widget_set_tooltip_text(contest_free_check,
+                              "Show the explicitly listed CW/SSB contest-free segments on classic HF bands.\n"
+                              "Bandplan guidance only; no TX blocking.");
+  gtk_grid_attach(GTK_GRID(regulations_grid), contest_free_check, col_pg_two, row_pg_two, 2, 1);
+  g_signal_connect(contest_free_check, "toggled", G_CALLBACK(iaru_contest_free_overlay_cb), NULL);
   //--------------------------------------------------------------------------------------------------------
   GtkWidget *iaru_region_combo_box = gtk_combo_box_text_new();
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(iaru_region_combo_box), NULL, "1");

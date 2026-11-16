@@ -149,6 +149,7 @@ int sat_mode;
 
 int region = REGION_VFO;
 int iaru_protected_overlay = 0;
+int iaru_contest_free_overlay = 0;
 
 DISCOVERED *radio = NULL;
 
@@ -2921,6 +2922,8 @@ static void radio_restore_state(void) {
   GetPropI0("region",                                        region);
   GetPropI0("iaru_protected_overlay",                        iaru_protected_overlay);
   iaru_protected_overlay = !!iaru_protected_overlay;
+  GetPropI0("iaru_contest_free_overlay",                     iaru_contest_free_overlay);
+  iaru_contest_free_overlay = !!iaru_contest_free_overlay;
   GetPropI0("atlas_penelope",                                atlas_penelope);
   GetPropI0("atlas_clock_source_10mhz",                      atlas_clock_source_10mhz);
   GetPropI0("atlas_clock_source_128mhz",                     atlas_clock_source_128mhz);
@@ -3252,6 +3255,7 @@ void radio_save_state(void) {
   SetPropI0("new_pa_board",                                  new_pa_board);
   SetPropI0("region",                                        region);
   SetPropI0("iaru_protected_overlay",                        iaru_protected_overlay);
+  SetPropI0("iaru_contest_free_overlay",                     iaru_contest_free_overlay);
   SetPropI0("atlas_penelope",                                atlas_penelope);
   SetPropI0("atlas_clock_source_10mhz",                      atlas_clock_source_10mhz);
   SetPropI0("atlas_clock_source_128mhz",                     atlas_clock_source_128mhz);

@@ -1512,10 +1512,44 @@ void rx_panadapter_update(RECEIVER *rx) {
   pan_display_shift = (double) rx_get_mode_dc_offset(vfo_id) / HzPerPixel;
   double min_display = (double) frequency - (double) half + ((double) rx->pan * HzPerPixel);
   double max_display = min_display + ((double) mywidth * HzPerPixel);
+  // Contest-free guidance for CW and SSB, in Hz. Maintain frequency limits here.
+  // These are bandplan/contest recommendations, not regulatory TX restrictions.
+  // Only the selected CW or SSB mode is eligible; digital modes are excluded.
+  if (iaru_contest_free_overlay && iaru_region == 1) {
+    enum { CONTEST_CW = 1, CONTEST_SSB = 2 };
+    static const struct { long long low, high; unsigned int modes; } contest_free[] = {
+      { 3560000LL,  3800000LL, CONTEST_CW  },
+      { 3650000LL,  3700000LL, CONTEST_SSB },
+      { 7040000LL,  7200000LL, CONTEST_CW  },
+      { 7080000LL,  7130000LL, CONTEST_SSB },
+      {14060000LL, 14350000LL, CONTEST_CW  },
+      {14100000LL, 14125000LL, CONTEST_SSB },
+      {14280000LL, 14350000LL, CONTEST_SSB },
+      {21350000LL, 21450000LL, CONTEST_SSB },
+      {28225000LL, 28400000LL, CONTEST_SSB }
+    };
+    unsigned int active_modes = (mode == modeCWU || mode == modeCWL) ? CONTEST_CW :
+                                (mode == modeUSB || mode == modeLSB) ? CONTEST_SSB : 0;
+    if (active_modes != 0) {
+      cairo_set_source_rgba(cr, 1.0, 0.35, 0.65, 0.45);
+      // cairo_set_source_rgba(cr, 0.15, 0.70, 0.75, 0.30);
+      for (size_t j = 0; j < sizeof(contest_free) / sizeof(contest_free[0]); j++) {
+        if (!(contest_free[j].modes & active_modes)) {
+          continue;
+        }
+        double x1 = ((double)contest_free[j].low - min_display) / HzPerPixel;
+        double x2 = ((double)contest_free[j].high - min_display) / HzPerPixel;
+        if (x2 > 0.0 && x1 < mywidth) {
+          double left = fmax(0.0, x1);
+          double right = fmin((double)mywidth, x2);
+          cairo_rectangle(cr, left, 0.0, right - left, myheight);
+        }
+      }
+      cairo_fill(cr);
+    }
+  }
   // Explicit beacon-exclusive segments from IARU Region 1 HF band plan (16 Oct 2020).
-  // The plan does not define additional contest-free subsegments on the
-  // classic contest bands. Do not infer restrictions from contest-preferred
-  // or DX-priority annotations. No TX enforcement is performed here.
+  // No TX enforcement is performed here.
   if (iaru_protected_overlay && iaru_region == 1) {
     static const struct { long long low, high; } beacons[] = {
       {14099000LL, 14101000LL},
@@ -1526,7 +1560,7 @@ void rx_panadapter_update(RECEIVER *rx) {
       {28199000LL, 28201000LL},
       {28201000LL, 28225000LL}
     };
-    cairo_set_source_rgba(cr, 1.0, 0.35, 0.65, 0.55);
+    cairo_set_source_rgba(cr, 1.0, 0.35, 0.65, 0.45);
     for (size_t j = 0; j < sizeof(beacons) / sizeof(beacons[0]); j++) {
       double x1 = ((double)beacons[j].low - min_display) / HzPerPixel;
       double x2 = ((double)beacons[j].high - min_display) / HzPerPixel;

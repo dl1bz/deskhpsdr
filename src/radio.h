@@ -127,6 +127,7 @@ typedef enum {
 
 extern int region;
 extern int iaru_protected_overlay;
+extern int iaru_contest_free_overlay;
 
 extern int RECEIVERS;
 extern int PS_TX_FEEDBACK;
